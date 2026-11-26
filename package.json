@@ -1,0 +1,11 @@
+{
+  "name": "sistema-reserva-labs-urp",
+  "version": "1.0.0",
+  "description": "Sistema de Reserva de Laboratorios URP + Agente IA y RAG",
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "seed": "cd server && npm run db:seed",
+    "build": "cd client && npm run build && cd ../server && npm run build"
+  }
+}
