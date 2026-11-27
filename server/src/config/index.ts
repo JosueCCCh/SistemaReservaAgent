@@ -8,9 +8,9 @@ export const config = {
   dbPath: process.env.DB_PATH || path.resolve(process.cwd(), 'data', 'reservas.db'),
   timeZone: process.env.TZ || 'America/Lima',
   mail: {
-    mode: (process.env.MAIL_MODE || 'simulado') as 'simulado' | 'real',
-    from: process.env.MAIL_FROM || '',
-    appPassword: (process.env.MAIL_APP_PASSWORD || '').replace(/\s+/g, ''),
+    mode: (process.env.MAIL_MODE || 'real') as 'simulado' | 'real',
+    from: process.env.MAIL_FROM || process.env.EMAIL_USER || '',
+    appPassword: (process.env.MAIL_APP_PASSWORD || process.env.EMAIL_PASS || '').replace(/\s+/g, ''),
     allowedDomains: process.env.ALLOWED_EMAIL_DOMAINS 
       ? process.env.ALLOWED_EMAIL_DOMAINS.split(',').map(d => d.trim().toLowerCase()) 
       : []
