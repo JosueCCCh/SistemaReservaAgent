@@ -4,9 +4,21 @@ import { DisponibilidadService } from '../modules/disponibilidad/disponibilidad.
 import { ReservasService } from '../modules/reservas/reservas.service.js';
 import { ReglamentosService } from '../modules/reglamentos/reglamentos.service.js';
 import { ChatService } from '../modules/chat/chat.service.js';
+import { seedDatabase } from '../db/seed.js';
 import { db } from '../db/index.js';
 
 export const apiRouter = Router();
+
+// M0: Inicialización y Seed en hosting cloud
+apiRouter.get('/seed', (req: Request, res: Response) => {
+  try {
+    seedDatabase();
+    const labs = LaboratoriosService.listarTodos();
+    res.json({ ok: true, mensaje: 'Base de datos poblada exitosamente', laboratorios: labs });
+  } catch (err: any) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // M1: Laboratorios
 apiRouter.get('/laboratorios', (req, res) => {
