@@ -98,6 +98,28 @@ export class ReservasService {
       // Comprobar si el bloque solicitado encaja en alguna franja libre
       const encaja = libres.some(([a, b]) => a <= ini && fin <= b);
       if (!encaja) {
+        // Verificar si el choque es con una reserva del mismo estudiante
+        const miReservaChocante = db.prepare(`
+          SELECT id, hora_inicio, hora_fin FROM reservas 
+          WHERE laboratorio_id = ? AND fecha = ? AND estado = 'activa' AND codigo_estudiante = ?
+        `).all(lab.id, fecha, codigo_estudiante.trim()) as any[];
+
+        const chocanConmigo = miReservaChocante.find(r => {
+          const rIni = aMin(r.hora_inicio);
+          const rFin = aMin(r.hora_fin);
+          return ini < rFin && fin > rIni;
+        });
+
+        if (chocanConmigo) {
+          return {
+            ok: false,
+            motivo: `Ya tienes registrada la reserva n.º ${chocanConmigo.id} para este mismo laboratorio y horario (${chocanConmigo.hora_inicio} a ${chocanConmigo.hora_fin}).`,
+            horas_libres_ese_dia: formatearIntervalos(libres),
+            es_mi_reserva: true,
+            reserva_id: chocanConmigo.id
+          };
+        }
+
         const motivos: string[] = [];
         if (!atencion.some(([a, b]) => a <= ini && fin <= b)) motivos.push("está fuera del horario de atención");
         if (chocaIntervalos(ini, fin, refrigerios)) motivos.push("coincide con el refrigerio del personal");
