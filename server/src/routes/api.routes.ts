@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import { LaboratoriosService } from '../modules/laboratorios/laboratorios.service.js';
 import { DisponibilidadService } from '../modules/disponibilidad/disponibilidad.service.js';
 import { ReservasService } from '../modules/reservas/reservas.service.js';
