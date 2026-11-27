@@ -70,7 +70,8 @@ apiRouter.get('/laboratorios/:id/horarios', (req, res) => {
 // M4: Disponibilidad
 apiRouter.get('/disponibilidad', (req, res) => {
   try {
-    const { laboratorioId, fecha } = req.query;
+    const laboratorioId = req.query.laboratorioId || req.query.laboratorio_id;
+    const { fecha } = req.query;
     if (!laboratorioId || !fecha) {
       return res.status(400).json({ error: 'Parámetros laboratorioId y fecha son requeridos' });
     }
@@ -121,7 +122,9 @@ apiRouter.delete('/reservas/:id', async (req, res) => {
 
 apiRouter.get('/reservas', (req, res) => {
   try {
-    const { laboratorioId, fecha, codigoEstudiante } = req.query;
+    const laboratorioId = req.query.laboratorioId || req.query.laboratorio_id;
+    const codigoEstudiante = req.query.codigoEstudiante || req.query.codigo || req.query.codigo_estudiante;
+    const { fecha } = req.query;
     const reservas = ReservasService.listarReservas({
       laboratorioId: laboratorioId ? Number(laboratorioId) : undefined,
       fecha: fecha ? String(fecha) : undefined,
@@ -136,7 +139,8 @@ apiRouter.get('/reservas', (req, res) => {
 // M6: Calendario (Ocupación: reservas, clases, refrigerios)
 apiRouter.get('/calendario', (req, res) => {
   try {
-    const { laboratorioId, fecha } = req.query;
+    const laboratorioId = req.query.laboratorioId || req.query.laboratorio_id;
+    const { fecha } = req.query;
     if (!laboratorioId || !fecha) {
       return res.status(400).json({ error: 'laboratorioId y fecha son requeridos' });
     }

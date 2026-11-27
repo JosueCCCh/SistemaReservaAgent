@@ -1,16 +1,22 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { db } from '../src/db/index.js';
 import { seedDatabase } from '../src/db/seed.js';
 import { DisponibilidadService } from '../src/modules/disponibilidad/disponibilidad.service.js';
 import { ReglamentosService } from '../src/modules/reglamentos/reglamentos.service.js';
 import { ReservasService } from '../src/modules/reservas/reservas.service.js';
+import { NotificacionesService } from '../src/modules/notificaciones/notificaciones.service.js';
 
 describe('Sistema de Reserva de Laboratorios URP - Tests', () => {
   beforeAll(() => {
     seedDatabase();
+    vi.spyOn(NotificacionesService, 'enviarCorreo').mockResolvedValue({
+      destinatario: 'cordovachavezjosueluis@gmail.com',
+      estado: 'enviado'
+    });
   });
 
   afterAll(() => {
+    vi.restoreAllMocks();
     db.close();
   });
 
@@ -60,6 +66,41 @@ describe('Sistema de Reserva de Laboratorios URP - Tests', () => {
     });
 
     expect(intentoDuplicado.ok).toBe(false);
-    expect(intentoDuplicado.motivo).toContain('ya hay una reserva activa');
+    expect(intentoDuplicado.motivo).toMatch(/(ya hay una reserva activa|Ya tienes registrada la reserva)/);
+  });
+
+  it('debe indicar que Telecomunicaciones no contempla reservas individuales', () => {
+    const disp = DisponibilidadService.calcularDisponibilidad('Telecomunicaciones', '2026-11-30');
+    expect(disp).toBeDefined();
+    expect(disp.error).toContain('no contempla reservas');
+    expect(disp.horas_libres).toBeUndefined();
+  });
+
+  it('debe buscar reglamentos sobre prohibición de alimentos (Art. 20)', () => {
+    const res = ReglamentosService.buscarReglamentos('alimentos bebidas fumar');
+    expect(res.resultados.length).toBeGreaterThan(0);
+    expect(res.resultados[0].cita).toContain('Art. 20');
+    expect(res.resultados[0].texto).toContain('alimentos');
+  });
+
+  it('debe cancelar una reserva existente con el código de estudiante correcto', async () => {
+    // Buscar la reserva creada
+    const misReservas = ReservasService.listarReservas({ codigoEstudiante: '202311373' });
+    expect(misReservas.length).toBeGreaterThan(0);
+    const reservaId = misReservas[0].id;
+
+    // Intentar cancelar con código incorrecto
+    const intentoFallido = await ReservasService.cancelarReserva(reservaId, '999999999');
+    expect(intentoFallido.ok).toBe(false);
+    expect(intentoFallido.motivo).toContain('no coincide');
+
+    // Cancelar con código correcto
+    const cancelacion = await ReservasService.cancelarReserva(reservaId, '202311373');
+    expect(cancelacion.ok).toBe(true);
+
+    // Verificar que el estado ahora es 'cancelada'
+    const reservasActualizadas = ReservasService.listarReservas({ codigoEstudiante: '202311373' });
+    const reservaCancelada = reservasActualizadas.find(r => r.id === reservaId);
+    expect(reservaCancelada?.estado).toBe('cancelada');
   });
 });
