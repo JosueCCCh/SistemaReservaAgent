@@ -47,9 +47,11 @@ export interface FragmentoCita {
   texto: string;
 }
 
+const API_BASE = import.meta.env.VITE_API_URL ? String(import.meta.env.VITE_API_URL).replace(/\/$/, '') : '';
+
 export const api = {
   async getLaboratorios(): Promise<Laboratorio[]> {
-    const res = await fetch('/api/laboratorios');
+    const res = await fetch(`${API_BASE}/api/laboratorios`);
     return res.json();
   },
 
@@ -58,17 +60,17 @@ export const api = {
     if (params?.laboratorioId) query.set('laboratorioId', String(params.laboratorioId));
     if (params?.estado) query.set('estado', params.estado);
     if (params?.q) query.set('q', params.q);
-    const res = await fetch(`/api/equipos?${query}`);
+    const res = await fetch(`${API_BASE}/api/equipos?${query}`);
     return res.json();
   },
 
   async getDisponibilidad(laboratorioId: number, fecha: string): Promise<DisponibilidadResponse> {
-    const res = await fetch(`/api/disponibilidad?laboratorioId=${laboratorioId}&fecha=${fecha}`);
+    const res = await fetch(`${API_BASE}/api/disponibilidad?laboratorioId=${laboratorioId}&fecha=${fecha}`);
     return res.json();
   },
 
   async getCalendario(laboratorioId: number, fecha: string) {
-    const res = await fetch(`/api/calendario?laboratorioId=${laboratorioId}&fecha=${fecha}`);
+    const res = await fetch(`${API_BASE}/api/calendario?laboratorioId=${laboratorioId}&fecha=${fecha}`);
     return res.json();
   },
 
@@ -81,7 +83,7 @@ export const api = {
     nombre: string;
     correo: string;
   }) {
-    const res = await fetch('/api/reservas', {
+    const res = await fetch(`${API_BASE}/api/reservas`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -90,7 +92,7 @@ export const api = {
   },
 
   async cancelarReserva(reservaId: number, codigoEstudiante: string) {
-    const res = await fetch(`/api/reservas/${reservaId}`, {
+    const res = await fetch(`${API_BASE}/api/reservas/${reservaId}`, {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ codigoEstudiante })
@@ -101,24 +103,24 @@ export const api = {
   async getReservas(codigoEstudiante?: string): Promise<Reserva[]> {
     const query = new URLSearchParams();
     if (codigoEstudiante) query.set('codigoEstudiante', codigoEstudiante);
-    const res = await fetch(`/api/reservas?${query}`);
+    const res = await fetch(`${API_BASE}/api/reservas?${query}`);
     return res.json();
   },
 
   async buscarReglamentos(q: string, laboratorio?: string): Promise<{ resultados: FragmentoCita[]; nota?: string; error?: string }> {
     const query = new URLSearchParams({ q });
     if (laboratorio) query.set('laboratorio', laboratorio);
-    const res = await fetch(`/api/reglamentos/buscar?${query}`);
+    const res = await fetch(`${API_BASE}/api/reglamentos/buscar?${query}`);
     return res.json();
   },
 
   async getDocumentos() {
-    const res = await fetch('/api/reglamentos/documentos');
+    const res = await fetch(`${API_BASE}/api/reglamentos/documentos`);
     return res.json();
   },
 
   async enviarChat(mensaje: string, historial: { role: string; content: string }[]) {
-    const res = await fetch('/api/chat', {
+    const res = await fetch(`${API_BASE}/api/chat`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ mensaje, historial })
