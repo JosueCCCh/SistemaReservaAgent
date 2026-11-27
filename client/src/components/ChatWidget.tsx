@@ -41,30 +41,46 @@ export const ChatWidget: React.FC = () => {
 
   return (
     <>
-      <div className="chat-fab" onClick={() => setOpen(!open)} title="Hablar con el Asistente IA">
-        {open ? <X size={26} /> : <MessageSquare size={26} />}
-      </div>
+      <button
+        type="button"
+        className="chat-fab"
+        onClick={() => setOpen(!open)}
+        title={open ? 'Cerrar Asistente IA' : 'Hablar con el Asistente IA'}
+        aria-label={open ? 'Cerrar Asistente IA' : 'Abrir Asistente IA'}
+        aria-expanded={open}
+      >
+        {open ? <X size={26} aria-hidden="true" /> : <MessageSquare size={26} aria-hidden="true" />}
+      </button>
 
       {open && (
-        <div className="chat-window">
+        <div className="chat-window" role="dialog" aria-label="Asistente Labs URP">
           <div className="chat-header">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={18} color="#38bdf8" />
+              <Sparkles size={18} color="#38bdf8" aria-hidden="true" />
               <span style={{ fontWeight: 600 }}>Asistente Labs URP</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               <button 
                 type="button"
-                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+                style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer', display: 'flex', alignItems: 'center', minWidth: '32px', minHeight: '32px', justifyContent: 'center' }}
                 title="Reiniciar conversación" 
+                aria-label="Reiniciar conversación"
                 onClick={() => setMessages([{
                   role: 'assistant',
                   content: '¡Hola! Soy el Asistente IA de los Laboratorios de la URP. Puedo informarte sobre reglamentos, consultar horas libres o ayudarte a reservar un laboratorio.'
                 }])}
               >
-                <RotateCcw size={16} />
+                <RotateCcw size={16} aria-hidden="true" />
               </button>
-              <X size={20} style={{ cursor: 'pointer' }} onClick={() => setOpen(false)} />
+              <button
+                type="button"
+                style={{ background: 'transparent', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center', minWidth: '32px', minHeight: '32px', justifyContent: 'center' }}
+                title="Cerrar asistente"
+                aria-label="Cerrar asistente"
+                onClick={() => setOpen(false)}
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
             </div>
           </div>
 
@@ -76,7 +92,44 @@ export const ChatWidget: React.FC = () => {
             ))}
             {loading && (
               <div className="message-bubble message-assistant" style={{ fontStyle: 'italic', color: '#64748b' }}>
-                Pensando y consultando herramientas...
+                Consultando disponibilidad y reglamentos URP...
+              </div>
+            )}
+            {messages.length === 1 && !loading && (
+              <div style={{ padding: '0 4px', marginTop: '4px' }}>
+                <p style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '8px', fontWeight: 600 }}>Consultas frecuentes:</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <button 
+                    type="button" 
+                    className="query-chip" 
+                    style={{ textAlign: 'left', width: 'fit-content' }}
+                    onClick={() => {
+                      setInput('¿Cuáles son los requisitos para ingresar a los laboratorios?');
+                    }}
+                  >
+                    ¿Cuáles son los requisitos de ingreso?
+                  </button>
+                  <button 
+                    type="button" 
+                    className="query-chip" 
+                    style={{ textAlign: 'left', width: 'fit-content' }}
+                    onClick={() => {
+                      setInput('¿Cuántos minutos de tolerancia hay para entrar al laboratorio?');
+                    }}
+                  >
+                    ¿Cuánta tolerancia hay para ingresar?
+                  </button>
+                  <button 
+                    type="button" 
+                    className="query-chip" 
+                    style={{ textAlign: 'left', width: 'fit-content' }}
+                    onClick={() => {
+                      setInput('¿Qué laboratorios admiten reservas de horas libres?');
+                    }}
+                  >
+                    ¿Qué laboratorios admiten reservas?
+                  </button>
+                </div>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -87,12 +140,13 @@ export const ChatWidget: React.FC = () => {
               type="text"
               className="form-control"
               placeholder="Escribe tu consulta..."
+              aria-label="Escribe tu consulta para el asistente"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={loading}
             />
-            <button type="submit" className="btn btn-primary" style={{ padding: '10px 14px' }} disabled={loading}>
-              <Send size={16} />
+            <button type="submit" className="btn btn-primary" style={{ padding: '10px 14px' }} disabled={loading} aria-label="Enviar mensaje">
+              <Send size={16} aria-hidden="true" />
             </button>
           </form>
         </div>
