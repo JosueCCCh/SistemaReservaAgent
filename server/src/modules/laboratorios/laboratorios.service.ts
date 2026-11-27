@@ -1,6 +1,6 @@
 import { db } from '../../db/index.js';
 import { normalizar } from '../../utils/intervalos.js';
-import { Laboratorio } from '../../../../shared/types.js';
+import { Laboratorio } from '../../types/index.js';
 
 export class LaboratoriosService {
   static listarTodos(): Laboratorio[] {

@@ -13,7 +13,7 @@ import { config } from '../../config/index.js';
 import { LaboratoriosService } from '../laboratorios/laboratorios.service.js';
 import { DisponibilidadService } from '../disponibilidad/disponibilidad.service.js';
 import { NotificacionesService } from '../notificaciones/notificaciones.service.js';
-import { Reserva } from '../../../../shared/types.js';
+import { Reserva } from '../../types/index.js';
 
 export interface CrearReservaParams {
   laboratorio: string | number;
