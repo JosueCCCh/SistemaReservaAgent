@@ -16,7 +16,8 @@ import {
   Radio,
   Cog,
   ArrowRight,
-  Info
+  Info,
+  Sparkles
 } from 'lucide-react';
 import { api } from './api/client';
 import type { Laboratorio, Equipo, Reserva, DisponibilidadResponse, FragmentoCita } from './api/client';
@@ -25,6 +26,8 @@ import { ChatWidget } from './components/ChatWidget';
 export function App() {
   const [activeTab, setActiveTab] = useState<'inicio' | 'laboratorios' | 'reservar' | 'mis-reservas' | 'equipos' | 'reglamentos'>('laboratorios');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatDocked, setChatDocked] = useState(false);
 
   // Estados generales
   const [laboratorios, setLaboratorios] = useState<Laboratorio[]>([]);
@@ -254,7 +257,7 @@ export function App() {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
+      <div className={`flex-1 flex flex-col h-screen overflow-hidden transition-all duration-300 ${chatOpen && chatDocked ? 'lg:mr-[380px]' : ''}`}>
         {/* Topbar Institucional */}
         <header className="h-16 bg-white border-b border-slate-200/80 px-6 sm:px-8 flex items-center justify-between shrink-0 shadow-xs z-10">
           <div className="flex items-center gap-3">
@@ -270,7 +273,19 @@ export function App() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
+            <button
+              onClick={() => setChatOpen(!chatOpen)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold border transition-all ${
+                chatOpen 
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs' 
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200/80 hover:bg-emerald-100'
+              }`}
+            >
+              <Sparkles size={14} />
+              <span className="hidden sm:inline">Asistente IA</span>
+            </button>
+
             <div className="text-right hidden sm:block">
               <p className="text-xs font-semibold text-slate-800">Universidad Ricardo Palma</p>
               <p className="text-[11px] text-slate-400">Campus Central · Surco</p>
@@ -283,7 +298,7 @@ export function App() {
 
         {/* Content Body */}
         <main className="flex-1 overflow-y-auto p-5 sm:p-8 bg-slate-50/80">
-          <div className="max-w-7xl mx-auto space-y-8">
+          <div className="max-w-5xl xl:max-w-6xl mx-auto space-y-7 pb-16">
             
             {/* VISTA 1: INICIO */}
             {activeTab === 'inicio' && (
@@ -554,7 +569,7 @@ export function App() {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                       <div>
                         <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Código Universitario</label>
                         <input 
@@ -577,8 +592,8 @@ export function App() {
                           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-emerald-600 focus:outline-none"
                         />
                       </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Correo Electrónico (Gmail / URP)</label>
+                      <div className="sm:col-span-2">
+                        <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Correo Electrónico Oficial (Gmail / URP)</label>
                         <input 
                           type="email" 
                           placeholder="estudiante@urp.edu.pe" 
@@ -587,6 +602,10 @@ export function App() {
                           required 
                           className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:bg-white focus:border-emerald-600 focus:outline-none"
                         />
+                        <p className="text-[11px] text-slate-400 mt-1.5 flex items-center gap-1.5">
+                          <Info size={13} className="text-emerald-600 shrink-0" />
+                          <span>Se enviará la constancia y detalles oficiales de la reserva a este correo.</span>
+                        </p>
                       </div>
                     </div>
 
@@ -795,8 +814,13 @@ export function App() {
         </main>
       </div>
 
-      {/* Chatbot Flotante IA */}
-      <ChatWidget />
+      {/* Chatbot Flotante / Acoplado IA */}
+      <ChatWidget 
+        open={chatOpen} 
+        setOpen={setChatOpen} 
+        docked={chatDocked} 
+        setDocked={setChatDocked} 
+      />
     </div>
   );
 }
