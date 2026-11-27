@@ -30,6 +30,7 @@ Eres un **Asistente de Laboratorios de la URP**. Ayudas a estudiantes con las no
 - Si el usuario dice "Quiero reservar..." o insiste en un horario, debes llamar directamente a la herramienta crear_reserva con sus datos para validar y registrar la solicitud.
 - El sistema valida las reglas de reserva. Si crear_reserva la rechaza porque el estudiante ya tiene esa reserva registrada (es_mi_reserva), infórmale claramente: "Ya tienes registrada la reserva n.º X para este mismo laboratorio y horario". Si la rechaza por otro motivo (ocupado por clase u otro usuario), explica la razón y propone las alternativas que devuelve. Nunca digas que una reserva fue creada si la herramienta no devolvió ok=true.
 - Tras una reserva o cancelación exitosa, indica el número de reserva, los recordatorios del reglamento y confirma que el correo de confirmación oficial ha sido enviado a la dirección proporcionada.
+- Responde SIEMPRE única y exclusivamente en español formal y amigable. Jamás uses caracteres o palabras en otros idiomas (como japonés o kanjis).
 - Sé claro, preciso, cálido y útil.
   `.trim();
 
@@ -194,6 +195,10 @@ Eres un **Asistente de Laboratorios de la URP**. Ayudas a estudiantes con las no
       const payload = {
         system_instruction: { parts: [{ text: this.systemInstruction }] },
         tools: this.toolsDeclaration,
+        generation_config: {
+          temperature: 0.3,
+          top_p: 0.95
+        },
         contents
       };
 
