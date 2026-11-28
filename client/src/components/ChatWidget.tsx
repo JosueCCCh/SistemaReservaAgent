@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ReactMarkdown from 'react-markdown';
 import { 
   MessageSquare, 
   X, 
@@ -140,13 +141,15 @@ export const ChatWidget: React.FC<ChatWidgetProps> = ({
               )}
 
               <div
-                className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[12px] sm:text-[13px] leading-relaxed shadow-xs whitespace-pre-wrap ${
+                className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-[12px] sm:text-[13px] leading-relaxed shadow-xs ${
                   isUser
-                    ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white rounded-br-xs font-normal'
-                    : 'bg-white text-slate-700 border border-slate-200/80 rounded-bl-xs'
+                    ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white rounded-br-xs font-normal whitespace-pre-wrap'
+                    : 'bg-white text-slate-700 border border-slate-200/80 rounded-bl-xs prose prose-xs max-w-none prose-p:my-1 prose-ul:my-1 prose-li:my-0.5 prose-strong:text-slate-800'
                 }`}
               >
-                {m.content}
+                {isUser ? m.content : (
+                  <ReactMarkdown>{m.content}</ReactMarkdown>
+                )}
               </div>
 
               {isUser && (
