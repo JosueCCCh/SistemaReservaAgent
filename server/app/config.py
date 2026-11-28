@@ -29,3 +29,6 @@ GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
 # RAG (ChromaDB opcional; si no existe, se usa SQLite FTS5)
 RAG_DB_PATH = os.getenv("RAG_DB_PATH", str(BASE_DIR / "data" / "chroma_db"))
 COLLECTION_NAME = os.getenv("COLLECTION_NAME", "reglamentos_labs")
+
+# Email transaccional vía Brevo HTTP API (alternativa a SMTP bloqueado en Render Free)
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "")

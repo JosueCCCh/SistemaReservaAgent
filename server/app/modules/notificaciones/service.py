@@ -6,6 +6,17 @@ import threading
 from datetime import datetime
 from email.message import EmailMessage
 
+import httpx
+
+from app.config import (
+    BREVO_API_KEY,
+    CORREO_CLAVE_APP,
+    CORREO_REMITENTE,
+    DOMINIOS_PERMITIDOS,
+    ENVIO_REAL,
+    ZONA_HORARIA,
+)
+
 
 class _SMTP_SSL_IPv4(smtplib.SMTP_SSL):
     """Fuerza conexión IPv4 manteniendo server_hostname para validar el certificado TLS."""
@@ -22,13 +33,6 @@ class _SMTP_IPv4(smtplib.SMTP):
     def _get_socket(self, host, port, timeout):
         ip = socket.getaddrinfo(host, port, socket.AF_INET, socket.SOCK_STREAM)[0][4][0]
         return socket.create_connection((ip, port), timeout, self.source_address)
-from app.config import (
-    CORREO_CLAVE_APP,
-    CORREO_REMITENTE,
-    DOMINIOS_PERMITIDOS,
-    ENVIO_REAL,
-    ZONA_HORARIA,
-)
 
 
 def _validar_correo(correo: str) -> bool:
@@ -96,38 +100,60 @@ def _enviar_correo(conn, tipo: str, reserva_id: int) -> dict:
 
     estado = "simulado"
     if ENVIO_REAL:
-        resultado_smtp = {"estado": "error: TimeoutError"}
-
-        def _enviar_smtp():
-            msg = EmailMessage()
-            msg["Subject"] = asunto
-            msg["From"] = CORREO_REMITENTE
-            msg["To"] = destino
-            msg.set_content(cuerpo)
-            ctx = ssl.create_default_context()
-            clave = CORREO_CLAVE_APP.replace(" ", "")
+        if BREVO_API_KEY:
+            # ── Brevo HTTP API (funciona en Render Free; no usa SMTP) ─────────
             try:
-                with _SMTP_SSL_IPv4("smtp.gmail.com", 465, context=ctx, timeout=3) as servidor:
-                    servidor.login(CORREO_REMITENTE, clave)
-                    servidor.send_message(msg)
-                resultado_smtp["estado"] = "enviado"
-                return
-            except Exception as e465:
+                resp = httpx.post(
+                    "https://api.brevo.com/v3/smtp/email",
+                    headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+                    json={
+                        "sender": {"email": CORREO_REMITENTE},
+                        "to": [{"email": destino}],
+                        "subject": asunto,
+                        "textContent": cuerpo,
+                    },
+                    timeout=10,
+                )
+                if resp.status_code in (200, 201):
+                    estado = "enviado"
+                else:
+                    estado = f"error: Brevo HTTP {resp.status_code} - {resp.text[:120]}"
+            except Exception as e:
+                estado = f"error: {type(e).__name__}"
+        else:
+            # ── Fallback SMTP Gmail (bloqueado en Render Free, útil en local) ─
+            resultado_smtp = {"estado": "error: TimeoutError"}
+
+            def _enviar_smtp():
+                msg = EmailMessage()
+                msg["Subject"] = asunto
+                msg["From"] = CORREO_REMITENTE
+                msg["To"] = destino
+                msg.set_content(cuerpo)
+                ctx = ssl.create_default_context()
+                clave = CORREO_CLAVE_APP.replace(" ", "")
                 try:
-                    with _SMTP_IPv4("smtp.gmail.com", 587, timeout=3) as servidor:
-                        servidor.ehlo()
-                        servidor.starttls(context=ctx)
-                        servidor.ehlo()
+                    with _SMTP_SSL_IPv4("smtp.gmail.com", 465, context=ctx, timeout=3) as servidor:
                         servidor.login(CORREO_REMITENTE, clave)
                         servidor.send_message(msg)
                     resultado_smtp["estado"] = "enviado"
-                except Exception as e587:
-                    resultado_smtp["estado"] = f"error: {type(e587).__name__} ({type(e465).__name__})"
+                    return
+                except Exception as e465:
+                    try:
+                        with _SMTP_IPv4("smtp.gmail.com", 587, timeout=3) as servidor:
+                            servidor.ehlo()
+                            servidor.starttls(context=ctx)
+                            servidor.ehlo()
+                            servidor.login(CORREO_REMITENTE, clave)
+                            servidor.send_message(msg)
+                        resultado_smtp["estado"] = "enviado"
+                    except Exception as e587:
+                        resultado_smtp["estado"] = f"error: {type(e587).__name__} ({type(e465).__name__})"
 
-        hilo = threading.Thread(target=_enviar_smtp, daemon=True)
-        hilo.start()
-        hilo.join(timeout=6)
-        estado = resultado_smtp["estado"]
+            hilo = threading.Thread(target=_enviar_smtp, daemon=True)
+            hilo.start()
+            hilo.join(timeout=6)
+            estado = resultado_smtp["estado"]
 
     conn.execute(
         "INSERT INTO correos (reserva_id,tipo,destinatario,asunto,cuerpo,estado,creado_en) VALUES (?,?,?,?,?,?,?)",
