@@ -1,6 +1,7 @@
 import re
 import smtplib
 import ssl
+import threading
 from datetime import datetime
 from email.message import EmailMessage
 from app.config import (
@@ -77,18 +78,26 @@ def _enviar_correo(conn, tipo: str, reserva_id: int) -> dict:
 
     estado = "simulado"
     if ENVIO_REAL:
-        try:
-            msg = EmailMessage()
-            msg["Subject"] = asunto
-            msg["From"] = CORREO_REMITENTE
-            msg["To"] = destino
-            msg.set_content(cuerpo)
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=8) as servidor:
-                servidor.login(CORREO_REMITENTE, CORREO_CLAVE_APP.replace(" ", ""))
-                servidor.send_message(msg)
-            estado = "enviado"
-        except Exception as e:
-            estado = f"error: {type(e).__name__}"
+        resultado_smtp = {"estado": "error: TimeoutError"}
+
+        def _enviar_smtp():
+            try:
+                msg = EmailMessage()
+                msg["Subject"] = asunto
+                msg["From"] = CORREO_REMITENTE
+                msg["To"] = destino
+                msg.set_content(cuerpo)
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=4) as servidor:
+                    servidor.login(CORREO_REMITENTE, CORREO_CLAVE_APP.replace(" ", ""))
+                    servidor.send_message(msg)
+                resultado_smtp["estado"] = "enviado"
+            except Exception as e:
+                resultado_smtp["estado"] = f"error: {type(e).__name__}"
+
+        hilo = threading.Thread(target=_enviar_smtp, daemon=True)
+        hilo.start()
+        hilo.join(timeout=5)
+        estado = resultado_smtp["estado"]
 
     conn.execute(
         "INSERT INTO correos (reserva_id,tipo,destinatario,asunto,cuerpo,estado,creado_en) VALUES (?,?,?,?,?,?,?)",
