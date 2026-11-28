@@ -99,25 +99,30 @@ class AgenteAcademico:
         self.chat_session = self.model.start_chat(history=[], enable_automatic_function_calling=True)
         self.historial_guardado: list[dict] = []
 
-    def enviar_mensaje(self, mensaje: str) -> str:
+    def enviar_mensaje(self, mensaje: str, chat_session=None) -> str:
         """Envía un mensaje al agente y mantiene la memoria de la conversación"""
+        session = chat_session or self.chat_session
         try:
             LOG_TOOLS.clear()
             ahora = datetime.now(ZONA_HORARIA)
             fecha_actual = f"[Fecha y hora actual en Lima: {DIAS[ahora.weekday()]} {ahora.strftime('%Y-%m-%d %H:%M')}]"
-            response = self.chat_session.send_message(f"{fecha_actual}\n{mensaje}")
+            response = session.send_message(
+                f"{fecha_actual}\n{mensaje}",
+                request_options={"timeout": 30},
+            )
+            texto = response.text or "No pude generar una respuesta."
             self.historial_guardado.append(
                 {
                     "timestamp": datetime.now().isoformat(),
                     "user": mensaje,
-                    "assistant": response.text,
+                    "assistant": texto,
                     "tools_usadas": list(LOG_TOOLS),
                 }
             )
-            return response.text
+            return texto
         except Exception as e:
-            print(f"Error al enviar el mensaje {e}")
-            return "Error al enviar mensaje"
+            print(f"Error al enviar el mensaje: {type(e).__name__}: {e}")
+            return "Lo siento, ocurrió un error o el sistema tardó demasiado en responder. Por favor, intenta de nuevo."
 
     def procesar_mensaje(self, historial: list[dict], nuevo_mensaje: str) -> str:
         """Procesa un mensaje con historial explícito (para el endpoint REST /api/chat)"""
@@ -129,10 +134,10 @@ class AgenteAcademico:
             for m in historial
             if m.get("content")
         ]
-        self.chat_session = self.model.start_chat(
+        session = self.model.start_chat(
             history=gemini_history, enable_automatic_function_calling=True
         )
-        return self.enviar_mensaje(nuevo_mensaje)
+        return self.enviar_mensaje(nuevo_mensaje, chat_session=session)
 
     def reset(self):
         """Reiniciar la memoria a cero"""

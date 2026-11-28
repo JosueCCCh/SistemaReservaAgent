@@ -83,7 +83,7 @@ def _enviar_correo(conn, tipo: str, reserva_id: int) -> dict:
             msg["From"] = CORREO_REMITENTE
             msg["To"] = destino
             msg.set_content(cuerpo)
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=20) as servidor:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=ssl.create_default_context(), timeout=8) as servidor:
                 servidor.login(CORREO_REMITENTE, CORREO_CLAVE_APP.replace(" ", ""))
                 servidor.send_message(msg)
             estado = "enviado"
